@@ -1,0 +1,213 @@
+📁 MERN Blog Application
+
+This is a full-stack blog application built with the MERN stack (MongoDB, Express.js, React.js, Node.js) that demonstrates seamless integration between front-end and back-end components.
+
+---
+
+## 📂 Project Structure
+
+```
+mern-blog-app/
+├── client/             # Front-end (React)
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   └── vite.config.js
+├── server/             # Back-end (Node + Express)
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── server.js
+│   └── config/
+├── .env.example
+└── README.md
+```
+
+---
+
+## 🔧 Setup Instructions
+
+1. Clone the repository:
+   ```bash
+   git clone <repo_url>
+   cd mern-blog-app
+   ```
+
+2. Install server dependencies:
+   ```bash
+   cd server
+   npm install
+   ```
+
+3. Install client dependencies:
+   ```bash
+   cd ../client
+   npm install
+   ```
+
+4. Create `.env` files for both client and server using `.env.example`.
+
+5. Run servers:
+   ```bash
+   # In server/
+   npm run dev
+
+   # In client/
+   npm run dev
+   ```
+
+---
+
+## 🧠 Back-End Code (Express + MongoDB)
+
+### MongoDB Connection (server/config/db.js)
+```js
+const mongoose = require('mongoose');
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB connected');
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+};
+module.exports = connectDB;
+```
+
+### Models (server/models/Post.js)
+```js
+const mongoose = require('mongoose');
+
+const PostSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+  image: String,
+}, { timestamps: true });
+
+module.exports = mongoose.model('Post', PostSchema);
+```
+
+### API Routes (server/routes/postRoutes.js)
+```js
+const express = require('express');
+const router = express.Router();
+const postController = require('../controllers/postController');
+
+router.get('/', postController.getAllPosts);
+router.get('/:id', postController.getPostById);
+router.post('/', postController.createPost);
+router.put('/:id', postController.updatePost);
+router.delete('/:id', postController.deletePost);
+
+module.exports = router;
+```
+
+### Controllers (server/controllers/postController.js)
+```js
+const Post = require('../models/Post');
+
+exports.getAllPosts = async (req, res) => {
+  const posts = await Post.find().populate('category');
+  res.json(posts);
+};
+
+exports.getPostById = async (req, res) => {
+  const post = await Post.findById(req.params.id);
+  res.json(post);
+};
+
+exports.createPost = async (req, res) => {
+  const newPost = await Post.create(req.body);
+  res.status(201).json(newPost);
+};
+
+exports.updatePost = async (req, res) => {
+  const updated = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(updated);
+};
+
+exports.deletePost = async (req, res) => {
+  await Post.findByIdAndDelete(req.params.id);
+  res.status(204).end();
+};
+```
+
+---
+
+## 🌐 Front-End Code (React + Vite)
+
+### vite.config.js
+```js
+export default {
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+    },
+  },
+};
+```
+
+### App.jsx
+```jsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import PostForm from './pages/PostForm';
+import SinglePost from './pages/SinglePost';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/post/:id" element={<SinglePost />} />
+        <Route path="/create" element={<PostForm />} />
+        <Route path="/edit/:id" element={<PostForm />} />
+      </Routes>
+    </Router>
+  );
+}
+export default App;
+```
+
+### Custom API Hook (client/src/hooks/useApi.js)
+```js
+import { useState, useEffect } from 'react';
+
+const useApi = (url) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => res.json())
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [url]);
+
+  return { data, loading, error };
+};
+
+export default useApi;
+```
+
+---
+
+## 🔐 Advanced Features
+- User authentication with JWT
+- Protected routes
+- File uploads (Multer)
+- Pagination and search filtering
+- Commenting system with nested replies
+
+---
+
+
